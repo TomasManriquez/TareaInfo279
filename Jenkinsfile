@@ -7,6 +7,25 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/TomasManriquez/TareaInfo279.git'
             }
         }
+        stage('Install Python') {
+            steps {
+                sh '''
+                # Verificar si Python está instalado
+                if ! command -v python3 &> /dev/null
+                then
+                    echo "Python3 no está instalado. Instalando Python3 y pip..."
+                    apt-get update && apt-get install -y python3 python3-pip
+                fi
+                
+                # Verificar si pip está disponible
+                if ! command -v pip3 &> /dev/null
+                then
+                    echo "pip3 no está instalado. Instalando pip3..."
+                    apt-get install -y python3-pip
+                fi
+                '''
+            }
+        }
         stage('Install Dependencies') {
             steps {
                 // Construye tu proyecto (ejemplo: usando Maven o Gradle)
