@@ -4,7 +4,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Clona el repositorio de tu proyecto
-                git 'https://github.com/TomasManriquez/TareaInfo279.git'
+                git branch: 'main', url: 'https://github.com/TomasManriquez/TareaInfo279.git'
             }
         }
         stage('Build') {
