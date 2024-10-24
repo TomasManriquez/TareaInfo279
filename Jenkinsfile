@@ -7,17 +7,31 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/TomasManriquez/TareaInfo279.git'
             }
         }
-        stage('Build') {
+        stage('Install Dependencies') {
             steps {
                 // Construye tu proyecto (ejemplo: usando Maven o Gradle)
-                sh './mvnw clean install'
+                sh 'pip install -r requirements.txt'
+                sh 'python -m spacy download es_core_news_sm'
+            }
+        }
+       stage('Run Notebook') {
+            steps {
+                sh 'jupyter nbconvert --to script Tarea.ipynb --output Tarea.py'
+                sh 'python Tarea.py'
             }
         }
         stage('SonarQube Analysis') {
+            enironment{
+                scannerHome = tool 'SonaQube Scanner'
+            }
             steps {
                 // Ejecuta el análisis de SonarQube
-                withSonarQubeEnv('SonarQube Local') {
-                    sh './mvnw sonar:sonar'
+                withSonarQubeEnv('SonarQube') {
+                    sh "${scannerHome}/bin/sonar-scanner \
+                    -Dsonar.proyectKey=my_python_proyect \
+                    -Dsonar.sources=. \
+                    -Dsonar.language=py \
+                    -Dsonar.sourceEncoding=UTF-8"
                 }
             }
         }
