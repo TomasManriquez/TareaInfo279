@@ -7,10 +7,39 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/TomasManriquez/TareaInfo279.git'
             }
         }
+         stage('Build Docker Image') {
+            steps {
+                script {
+                    // Define el nombre de la imagen y la ruta del Dockerfile
+                    def imageName = 'my-python-app'
+                    
+                    // Crea un Dockerfile dinámicamente
+                    writeFile file: 'Dockerfile', text: '''
+                    FROM python:3.9-slim
+    
+                    # Establece el directorio de trabajo
+                    WORKDIR /app
+    
+                    # Copia los archivos de requisitos
+                    COPY requirements.txt ./
+    
+                    # Instala las dependencias
+                    RUN pip install --no-cache-dir -r requirements.txt
+                    '''
+    
+                    // Construye la imagen Docker
+                    sh "docker build -t ${imageName} ."
+    
+                    // Limpia el Dockerfile después de la construcción
+                    sh 'rm Dockerfile'
+                }
+            }
+        
         stage('Install Python') {
+            
             steps {
                 sh '''
-                whoami
+             
                 # Verificar si Python está instalado
                 if ! command -v python3 &> /dev/null
                 then
@@ -34,24 +63,31 @@ pipeline {
                 sh 'python -m spacy download es_core_news_sm'
             }
         }
-       stage('Run Notebook') {
+      stage('Run Notebook') {
             steps {
-                sh 'jupyter nbconvert --to script Tarea.ipynb --output Tarea.py'
-                sh 'python Tarea.py'
+                script {
+                    def imageName = 'my-python-app'
+                    // Ejecuta el comando dentro del contenedor
+                    sh "docker run --rm -v \${WORKSPACE}:/app ${imageName} jupyter nbconvert --to script Tarea.ipynb --output Tarea.py"
+                    sh "docker run --rm -v \${WORKSPACE}:/app ${imageName} python Tarea.py"
+                }
             }
         }
         stage('SonarQube Analysis') {
-            environment{
-                scannerHome = tool 'SonaQube Scanner'
+            environment {
+                scannerHome = tool 'SonarQube Scanner'
             }
             steps {
-                // Ejecuta el análisis de SonarQube
-                withSonarQubeEnv('SonarQube') {
-                    sh "${scannerHome}/bin/sonar-scanner \
-                    -Dsonar.proyectKey=my_python_proyect \
-                    -Dsonar.sources=. \
-                    -Dsonar.language=py \
-                    -Dsonar.sourceEncoding=UTF-8"
+                script {
+                    def imageName = 'my-python-app'
+                    // Ejecuta el análisis de SonarQube dentro del contenedor
+                    withSonarQubeEnv('SonarQube') {
+                        sh "docker run --rm -v \${WORKSPACE}:/app ${imageName} ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=my_python_project \
+                        -Dsonar.sources=. \
+                        -Dsonar.language=py \
+                        -Dsonar.sourceEncoding=UTF-8"
+                    }
                 }
             }
         }
