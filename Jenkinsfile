@@ -34,7 +34,7 @@ pipeline {
                     sh 'rm Dockerfile'
                 }
             }
-        
+         }
         stage('Install Python') {
             
             steps {
