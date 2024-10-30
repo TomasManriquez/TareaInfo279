@@ -10,6 +10,7 @@ pipeline {
         stage('Install Python') {
             steps {
                 sh '''
+                whoami
                 # Verificar si Python está instalado
                 if ! command -v python3 &> /dev/null
                 then
